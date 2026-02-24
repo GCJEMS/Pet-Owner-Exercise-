@@ -1,26 +1,54 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOwnerDto } from './dto/create-owner.dto';
 import { UpdateOwnerDto } from './dto/update-owner.dto';
 
 @Injectable()
 export class OwnersService {
+
+  private owners: any[] = [];
+  private id = 1;
+
   create(createOwnerDto: CreateOwnerDto) {
-    return 'This action adds a new owner';
+    const owner = {
+      id: this.id++,
+      ...createOwnerDto,
+    };
+
+    this.owners.push(owner);
+    return owner;
   }
 
   findAll() {
-    return `This action returns all owners`;
+    return this.owners;
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} owner`;
+    const owner = this.owners.find(o => o.id === id);
+
+    if (!owner) {
+      throw new NotFoundException('Owner not found');
+    }
+
+    return owner;
   }
 
   update(id: number, updateOwnerDto: UpdateOwnerDto) {
-    return `This action updates a #${id} owner`;
+    const owner = this.findOne(id);
+
+    Object.assign(owner, updateOwnerDto);
+
+    return owner;
   }
 
   remove(id: number) {
-    return `This action removes a #${id} owner`;
+    const index = this.owners.findIndex(o => o.id === id);
+
+    if (index === -1) {
+      throw new NotFoundException('Owner not found');
+    }
+
+    this.owners.splice(index, 1);
+
+    return { message: 'Owner deleted successfully' };
   }
 }
