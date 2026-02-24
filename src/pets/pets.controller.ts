@@ -8,8 +8,8 @@ export class PetsController {
   constructor(private readonly petsService: PetsService) {}
 
   @Post()
-  create(@Body() createPetDto: CreatePetDto) {
-    return this.petsService.create(createPetDto);
+  create(@Body() dto: CreatePetDto) {
+    return this.petsService.create(dto);
   }
 
   @Get()
@@ -23,8 +23,8 @@ export class PetsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePetDto: UpdatePetDto) {
-    return this.petsService.update(+id, updatePetDto);
+  update(@Param('id') id: string, @Body() dto: UpdatePetDto) {
+    return this.petsService.update(+id, dto);
   }
 
   @Delete(':id')
