@@ -1,29 +1,34 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Pet } from './entities/pet.entity';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 
 @Injectable()
 export class PetsService {
 
-  private pets: any[] = [];
-  private id = 1;
+  constructor(
+    @InjectRepository(Pet)
+    private petRepository: Repository<Pet>,
+  ) {}
 
-  create(createPetDto: CreatePetDto) {
-    const pet = {
-      id: this.id++,
-      ...createPetDto,
-    };
-
-    this.pets.push(pet);
-    return pet;
+  async create(createPetDto: CreatePetDto) {
+    const pet = this.petRepository.create(createPetDto);
+    return await this.petRepository.save(pet);
   }
 
-  findAll() {
-    return this.pets;
+  async findAll() {
+    return await this.petRepository.find({
+      relations: ['owner'], // remove if wala pa relation
+    });
   }
 
-  findOne(id: number) {
-    const pet = this.pets.find(p => p.id === id);
+  async findOne(id: number) {
+    const pet = await this.petRepository.findOne({
+      where: { id },
+      relations: ['owner'], // remove if wala pa relation
+    });
 
     if (!pet) {
       throw new NotFoundException('Pet not found');
@@ -32,22 +37,18 @@ export class PetsService {
     return pet;
   }
 
-  update(id: number, updatePetDto: UpdatePetDto) {
-    const pet = this.findOne(id);
+  async update(id: number, updatePetDto: UpdatePetDto) {
+    const pet = await this.findOne(id);
 
     Object.assign(pet, updatePetDto);
 
-    return pet;
+    return await this.petRepository.save(pet);
   }
 
-  remove(id: number) {
-    const index = this.pets.findIndex(p => p.id === id);
+  async remove(id: number) {
+    const pet = await this.findOne(id);
 
-    if (index === -1) {
-      throw new NotFoundException('Pet not found');
-    }
-
-    this.pets.splice(index, 1);
+    await this.petRepository.remove(pet);
 
     return { message: 'Pet deleted successfully' };
   }

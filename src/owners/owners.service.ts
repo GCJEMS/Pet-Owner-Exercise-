@@ -1,29 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Owner } from './entities/owner.entity';
 import { CreateOwnerDto } from './dto/create-owner.dto';
 import { UpdateOwnerDto } from './dto/update-owner.dto';
 
 @Injectable()
 export class OwnersService {
 
-  private owners: any[] = [];
-  private id = 1;
+  constructor(
+    @InjectRepository(Owner)
+    private ownerRepository: Repository<Owner>,
+  ) {}
 
-  create(createOwnerDto: CreateOwnerDto) {
-    const owner = {
-      id: this.id++,
-      ...createOwnerDto,
-    };
-
-    this.owners.push(owner);
-    return owner;
+  async create(createOwnerDto: CreateOwnerDto) {
+    const owner = this.ownerRepository.create(createOwnerDto);
+    return await this.ownerRepository.save(owner);
   }
 
-  findAll() {
-    return this.owners;
+  async findAll() {
+    return await this.ownerRepository.find();
   }
 
-  findOne(id: number) {
-    const owner = this.owners.find(o => o.id === id);
+  async findOne(id: number) {
+    const owner = await this.ownerRepository.findOneBy({ id });
 
     if (!owner) {
       throw new NotFoundException('Owner not found');
@@ -32,22 +32,18 @@ export class OwnersService {
     return owner;
   }
 
-  update(id: number, updateOwnerDto: UpdateOwnerDto) {
-    const owner = this.findOne(id);
+  async update(id: number, updateOwnerDto: UpdateOwnerDto) {
+    const owner = await this.findOne(id);
 
     Object.assign(owner, updateOwnerDto);
 
-    return owner;
+    return await this.ownerRepository.save(owner);
   }
 
-  remove(id: number) {
-    const index = this.owners.findIndex(o => o.id === id);
+  async remove(id: number) {
+    const owner = await this.findOne(id);
 
-    if (index === -1) {
-      throw new NotFoundException('Owner not found');
-    }
-
-    this.owners.splice(index, 1);
+    await this.ownerRepository.remove(owner);
 
     return { message: 'Owner deleted successfully' };
   }
